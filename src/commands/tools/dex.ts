@@ -8,6 +8,7 @@ import { TypeColors } from "../../utils/typeColors";
 export class DexCommand implements ICommand {
 	name = "dex";
 	aliases = ["pokemon"];
+	category = "Tools";
 	description = "Gets information about a pokemon, item, move, or ability from smogon.";
 	usage = ["b!dex lopunny", "b!dex item lopunnite", "b!dex ability scrappy", "b!dex move close combat"];
 	invoke = async (ctx: CommandContext) => {

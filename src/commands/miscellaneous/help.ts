@@ -18,7 +18,8 @@ export class HelpCommand implements ICommand {
 			embed.setDescription(`Prefix: ${prefix}\nTotal Commands: ${ctx.client.commands.size}`);
 
 			const categorys = [
-				"Miscellaneous"
+				"Miscellaneous",
+				"Tools"
 			];
 
 			categorys.forEach(cat => {

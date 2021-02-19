@@ -9,6 +9,7 @@ import { Dex } from "@pkmn/dex";
 export class DamageCommand implements ICommand {
 	name = "damagecalc";
 	aliases = ["calc", "damage"];
+	category = "Tools";
 	description = "A Damage calucator command."
 	invoke = async (ctx: CommandContext) => {
 		let gen = 8;
