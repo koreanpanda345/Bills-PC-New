@@ -28,7 +28,7 @@ export class HelpCommand implements ICommand {
 				cmds.forEach(cmd => {
 					desc += `- ${cmd.name}\n`;
 				});
-				embed.addField(`${cat}`, desc, true);
+				embed.addField(`${cat}`, desc);
 			});
 		}
 		else {
