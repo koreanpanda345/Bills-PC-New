@@ -73,6 +73,11 @@ export class StartdraftCommand implements ICommand {
 						let args = collected.content.trim().split(/ +/g);
 						let prefix = args.shift()?.toLowerCase();
 						let pokemon = args.join(" ");
+						let text = "";
+						if(pokemon.includes("-text")) {
+							text = pokemon.split("-text")[1].trim();
+							pokemon = pokemon.split("-text")[0].trim();
+						}
 						if(prefix?.length! < 1 || prefix !== record.prefix) return dm.send("Please enter your league's prefix, then your pokemon. example `" + record.prefix + " lopunny`");
 						let check = Dex.getSpecies(pokemon.toLowerCase().trim());
 						if(!check.exists) return dm.send("That is not a pokemon");
@@ -84,7 +89,7 @@ export class StartdraftCommand implements ICommand {
 						player?.pokemon.push(pokemon);
 						record.pokemon?.push(pokemon);
 						let draftEmbed = new MessageEmbed()
-							.setDescription(`<@${record.currentPlayer}> Has Drafted **${pokemon.charAt(0).toUpperCase() + pokemon.slice(1)}**`)
+							.setDescription(`<@${record.currentPlayer}> Has Drafted **${pokemon.charAt(0).toUpperCase() + pokemon.slice(1)}**${text !== "" ? `\n${text}`: ""}`)
 							.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)
 							.setColor("RANDOM");
 						ctx.sendMessage(draftEmbed);
