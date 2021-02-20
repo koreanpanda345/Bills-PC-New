@@ -45,8 +45,7 @@ export class SetdraftCommand implements ICommand {
 
 			step1.on("collect", (collected: Message) => {
 				if(collected.content.toLowerCase().includes("cancel")) {
-					ctx.sendMessage("Cancelling");
-					step1.stop("Cancelled");
+					return ctx.sendMessage("Cancelling");
 				}
 				draft.leagueName = collected.content.trim();
 				step1.stop();
@@ -60,8 +59,7 @@ export class SetdraftCommand implements ICommand {
 					if(reason === "Cancelled") step2.stop("Cancelled");
 					if(collected.content.toLowerCase().includes("cancel"))
 					{
-						ctx.sendMessage("Cancelling");
-						step2.stop("Cancelled");
+						return ctx.sendMessage("Cancelling");
 					}
 					draft.leaguePrefix = collected.content.trim();
 					step2.stop();
@@ -76,8 +74,8 @@ export class SetdraftCommand implements ICommand {
 					if(reason === "Cancelled") step3.stop("Cancelled");
 					if(collected.content.toLowerCase().includes("cancel"))
 					{
-						ctx.sendMessage("Cancelling");
-						step3.stop("Cancelled");
+						return ctx.sendMessage("Cancelling");
+						
 					}
 					let time = collected.content.toLowerCase();
 					if(time.includes("m")) draft.timer = Number.parseInt(time.split("m")[0].trim()) * 1000 * 60;
@@ -91,15 +89,14 @@ export class SetdraftCommand implements ICommand {
 			
 
 			step3.on("end", (result, reason) => {
-				embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}` + "\nPlease add the player's ids in. You can add each one individually, or all at once. If you chose to do it all at once then separate each one a `,` so I know.");
+				embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}` + "\nPlease add the pings of the players. You can add each one individually, or all at once.");
 				msg.edit(embed);
 				step4.on("collect", async (collected: Message) => {
 					if(result.has(collected.id)) return;
 					if(reason === "Cancelled") step4.stop("Cancelled");
 					if(collected.content.toLowerCase().includes("cancel"))
 					{
-						ctx.sendMessage("Cancelling");
-						step4.stop("Cancelled");
+						return ctx.sendMessage("Cancelling");
 					}
 					if(collected.content.toLowerCase().includes("save")) step4.stop();
 					else {
@@ -121,8 +118,7 @@ export class SetdraftCommand implements ICommand {
 					if(result.has(collected.id)) return;
 					if(reason === "Cancelled") step5.stop("Cancelled");
 					if(collected.content.toLowerCase().includes("cancel")) {
-						ctx.sendMessage("Cancelling");
-						step5.stop("Cancelled");
+						return ctx.sendMessage("Cancelling");
 					}
 
 					else if(collected.content.toLowerCase().includes("skip"))
@@ -148,7 +144,7 @@ export class SetdraftCommand implements ICommand {
 					if(reason === "Cancelled") step6.stop("Cancelled");
 					
 					if(collected.content.toLowerCase().includes("cancel")) {
-						ctx.sendMessage("Cancelling");
+						return ctx.sendMessage("Cancelling");
 					}
 
 					if(collected.content.toLowerCase().includes("skip"))
@@ -172,8 +168,8 @@ export class SetdraftCommand implements ICommand {
 					if(result.has(collected.id)) return;
 					if(reason === "Cancelled") step7.stop("Cancelled");
 					if(collected.content.toLowerCase().includes("cancel")) {
-						ctx.sendMessage("Cancelling");
-						step7.stop("Cancelled");
+						return ctx.sendMessage("Cancelling");
+						
 					}
 					else if(collected.content.toLowerCase().includes("yes")) {
 						step7.stop();
