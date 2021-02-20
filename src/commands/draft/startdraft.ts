@@ -120,11 +120,25 @@ export class StartdraftCommand implements ICommand {
 						}
 						record.save().catch(error => console.error(error));
 						if(record.round <= record.maxRounds) await getUserPicks(record);
+						else if(record.round >= record.maxRounds) {
+							let finishedEmbed = new MessageEmbed();
+							finishedEmbed.setTitle('Draft has concluded');
+							finishedEmbed.setDescription(`Here is the Drafts that each player has made.`);
+							finishedEmbed.setColor("RANDOM");
+							for(let _player of record.players) {
+								let desc = "";
+								_player.pokemon.forEach(x => desc += `Round ${_player.pokemon.findIndex(y => y === x) + 1} - ${x}\n`);
+
+								finishedEmbed.addField(`Player ${(await ctx.client.users.fetch(_player.userId)).username}`, desc, true);
+							}
+
+							return ctx.sendMessage(finishedEmbed);
+						}
 					});
 					}
 				});
 			};
-			getUserPicks(record);
+			await getUserPicks(record);
 		});
 	};
 }
