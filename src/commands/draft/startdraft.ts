@@ -20,11 +20,42 @@ export class StartdraftCommand implements ICommand {
 
 
 			let getUserPicks = async (record: IDraftTimer) => {
-				(await ctx.client.users.fetch(record.currentPlayer)).createDM().then(dm => {
+				(await ctx.client.users.fetch(record.currentPlayer)).createDM().then(async dm => {
 					let filter = (m: Message) => m.author.id === record.currentPlayer;
 					let collector = dm.createMessageCollector(filter, {time: record.timer});
 					let player = record.players.find(x => x.userId === record.currentPlayer);
-					
+					if(player?.queue.length !== 0) {
+						let pokemon = player?.queue.shift()!;
+						let check = Dex.getSpecies(pokemon.toLowerCase().trim());
+						let draftEmbed = new MessageEmbed()
+							.setDescription(`<@${record.currentPlayer}> Has Drafted **${pokemon.charAt(0).toUpperCase() + pokemon.slice(1)}**`)
+							.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)
+							.setColor("RANDOM");
+						ctx.sendMessage(draftEmbed);
+						if(record.direction === "down") {
+							console.log(player?.order);
+							console.log(record.players.length);
+							console.log(player?.order === record.players.length);
+							if(player?.order === record.players.length) {
+								console.log("something");
+								record.direction = "up";
+								record.round++;
+							}
+							else 
+								record.currentPlayer = record.players.find(x => x.order === player?.order! + 1)?.userId!;
+						}
+						else if(record.direction === "up") {
+							if(player?.order === 1) {
+								record.direction = "down";
+								record.round++;
+							}
+							else 
+								record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;	
+						}
+						record.save().catch(error => console.error(error));
+						if(record.round <= record.maxRounds) await getUserPicks(record);
+					}
+					else {
 					let time = moment(record.timer);
 					let pickEmbed = new MessageEmbed()
 						.setTitle(`Its your pick in ${ctx.guild?.name}`)
@@ -72,8 +103,9 @@ export class StartdraftCommand implements ICommand {
 							ctx.sendMessage(skipEmbed);
 						}
 						if(record.direction === "down") {
-							if(player?.order === record.players.length + 1) {
+							if(player?.order === record.players.length) {
 								record.direction = "up";
+								record.round++;
 							}
 							else 
 								record.currentPlayer = record.players.find(x => x.order === player?.order! + 1)?.userId!;
@@ -81,6 +113,7 @@ export class StartdraftCommand implements ICommand {
 						else if(record.direction === "up") {
 							if(player?.order === 1) {
 								record.direction = "down";
+								record.round++;
 							}
 							else 
 								record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;	
@@ -88,6 +121,7 @@ export class StartdraftCommand implements ICommand {
 						record.save().catch(error => console.error(error));
 						if(record.round <= record.maxRounds) await getUserPicks(record);
 					});
+					}
 				});
 			};
 			getUserPicks(record);
