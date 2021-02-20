@@ -2,7 +2,8 @@ import { IEvent } from "../../types/events";
 import { BillsPC } from "../../BillsPC";
 import { Message } from "discord.js";
 import { CommandContext } from "../../types/commandContext";
-
+import DraftTimer, { IDraftTimer } from "../../database/schemas/DraftTimerSchema";
+import { CallbackError } from "mongoose";
 
 export class MessageEvent implements IEvent {
 	name = "message";
@@ -11,7 +12,8 @@ export class MessageEvent implements IEvent {
 	){}
 
 	invoke = async (message: Message) => {
-		if(message.author.bot || message.channel.type === "dm") return;
+		if(message.author.bot) return;
+
 		let prefix = process.env.PREFIX;
 		if(message.content.toLowerCase().startsWith(prefix!)) {
 			const args = message.content.slice(prefix!.length).trim().split(/ +/g);

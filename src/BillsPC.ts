@@ -8,12 +8,13 @@ export class BillsPC extends Client
     private readonly _commands: Collection<string, ICommand>;
     private readonly _logger: Inscriber;
     private readonly _events: Collection<string, IEvent>;
-
+	private readonly _timers: Collection<string, number>;
     constructor() {
         super();
         this._commands = new Collection<string, any>();
         this._logger = new Inscriber();
         this._events = new Collection<string, any>();
+		this._timers = new Collection<string, number>();
     }
 
 	public start(type: "development" | "production") {
@@ -61,5 +62,6 @@ export class BillsPC extends Client
     public get commands() { return this._commands; }
     public get logger() { return this._logger; }
     public get events() { return this._events; }
+	public get timers() { return this._timers; }
 
 }

@@ -98,14 +98,15 @@ export class DexCommand implements ICommand {
 				}
 
 				let poke = Dex.getSpecies(search);
-				if(!poke.name) {
-					embed.setTitle(`Error: Couldn't find pokemon called ${search}`);
-					embed.setColor('RED');
-					embed.setDescription('Please make sure you spelt it correctly.');
-					return ctx.sendMessage(embed);
-				}
+
 				let abilities: string = "";
 			let ab = Object.values(poke.abilities);
+			if(ab.length === 1 && ab[0] === '') {
+				embed.setTitle(`Error: Couldn't find pokemon called ${search}`);
+				embed.setColor('RED');
+				embed.setDescription('Please make sure you spelt it correctly.');
+				return ctx.sendMessage(embed);
+			}
 			console.log(ab);
 			for (let i = 0; i < ab.length; i++) 
 			{

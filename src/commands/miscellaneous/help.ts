@@ -19,7 +19,8 @@ export class HelpCommand implements ICommand {
 
 			const categorys = [
 				"Miscellaneous",
-				"Tools"
+				"Tools",
+				"Draft"
 			];
 
 			categorys.forEach(cat => {
