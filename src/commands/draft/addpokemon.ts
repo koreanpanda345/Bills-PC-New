@@ -8,6 +8,7 @@ import { Dex } from "@pkmn/dex";
 export class AddpokemonCommand implements ICommand {
 	name = "addpokemon";
 	category = "draft";
+	description = "Adds a pokemon to a player that has already been skipped or such. Ping the user you want to add the pokemon to, then add the pokemon.\nYou can apply text to this selection by doing `-text` at the end, and say what ever."
 	permission: {user: PermissionString[]} = {
 		user: ["MANAGE_GUILD"]
 	};

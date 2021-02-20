@@ -59,7 +59,7 @@ export class StartdraftCommand implements ICommand {
 					let time = moment(record.timer);
 					let pickEmbed = new MessageEmbed()
 						.setTitle(`Its your pick in ${ctx.guild?.name}`)
-						.setDescription(`Your league's prefix is ${record.prefix}. To draft a pokemon type in \`${record.prefix} <pokemon name>\` example: \`${record.prefix} lopunny\``)
+						.setDescription(`Your league's prefix is ${record.prefix}. To draft a pokemon type in \`${record.prefix} <pokemon name>\` example: \`${record.prefix} lopunny\`\nYou can apply text to the selection by adding \`-text\` at the end of the pokemon you want, then say whatever you want to say.`)
 						.setColor("RANDOM")
 						.addField("Timer:", `${time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`}`)
 						.setFooter(`We are on pick ${player?.order} of round ${record.round} / ${record.maxRounds}`);
