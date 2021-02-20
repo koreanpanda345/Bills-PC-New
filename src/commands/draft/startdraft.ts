@@ -3,7 +3,7 @@ import { CommandContext } from "../../types/commandContext";
 import DraftTimer from "../../database/schemas/DraftTimerSchema";
 import {IDraftTimer} from "../../database/schemas/DraftTimerSchema";
 import {Dex} from "@pkmn/dex";
-import { TextChannel, Message } from "discord.js";
+import { TextChannel, Message, MessageEmbed } from "discord.js";
 import moment from "moment";
 export class StartdraftCommand implements ICommand {
 	name = "startdraft";
@@ -12,10 +12,9 @@ export class StartdraftCommand implements ICommand {
 		//@ts-ignore
 		DraftTimer.findOne({serverId: ctx.guildId, channelId: ctx.channelId}, async (err, record: IDraftTimer) => {
 			if(record === null) return ctx.sendMessage("Please use the `setdraft` command to setup the draft timer.");
-			ctx.sendMessage(`Timer has been set`);
+			ctx.sendMessage(`Draft Timer has been turned on!`);
 			console.log(record.round <= record.maxRounds);
 			await this.getUserPick(record, ctx);
-
 		});
 	};
 
@@ -24,18 +23,36 @@ export class StartdraftCommand implements ICommand {
 			let filter = (m: Message) => m.author.id === record.currentPlayer;
 			let collector = dm.createMessageCollector(filter, {time: record.timer});
 			let player = record.players.find(x => x.userId === record.currentPlayer);
-			dm.send(`Your Pick in ${ctx.guild?.name}`);
+			
 			let time = moment(record.timer);
-			ctx.sendMessage(`<@${record.currentPlayer}> is on the Clock! (Timer is ${time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`})`);
+			let pickEmbed = new MessageEmbed()
+				.setTitle(`Its your pick in ${ctx.guild?.name}`)
+				.setDescription(`Your league's prefix is ${record.prefix}. To draft a pokemon type in \`${record.prefix} <pokemon name>\` example: \`${record.prefix} lopunny\``)
+				.setColor("RANDOM")
+				.addField("Timer:", `${time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`}`)
+				.setFooter(`We are on Round ${record.round} / ${record.maxRounds}`);
+			dm.send(pickEmbed);
+			let serverEmbed = new MessageEmbed()
+				.setDescription(`<@${record.currentPlayer}> is on the Clock!\nWe are on Round ${record.round} / ${record.maxRounds} on player ${player?.order} going ${record.direction}`)
+				.addField("Timer:", `${time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`}`)
+				.setColor("RANDOM");
+			ctx.sendMessage(serverEmbed);
 			collector.on("collect", async (collected: Message) => {
-				let pokemon = collected.content.trim();
+				let args = collected.content.trim().split(/ +/g);
+				let prefix = args.shift()?.toLowerCase();
+				let pokemon = args.join(" ");
+				if(!prefix || prefix !== record.prefix) return dm.send("Please enter your league's prefix, then your pokemon. example `" + record.prefix + " lopunny`");
 				let check = Dex.getSpecies(pokemon.toLowerCase().trim());
 				if(!check.exists) return dm.send("That is not a pokemon");
 				let found = record.pokemon.find(x => x.toLowerCase() === pokemon.toLowerCase());
 				if(found) return dm.send("That pokemon has already been picked.");
 				player?.pokemon.push(pokemon);
 				record.pokemon?.push(pokemon);
-				((await ctx.client.channels.fetch(record.channelId)) as TextChannel).send(`<@${record.currentPlayer}> has drafted ${pokemon}!`);
+				let draftEmbed = new MessageEmbed()
+					.setDescription(`<@${record.currentPlayer}> Has Drafted **${pokemon.charAt(0).toUpperCase() + pokemon.slice(1)}**`)
+					.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)
+					.setColor("RANDOM");
+				ctx.sendMessage(draftEmbed);
 				collector.stop('picked');
 			});
 
@@ -44,24 +61,26 @@ export class StartdraftCommand implements ICommand {
 				if(reason === 'time'){
 					player?.skips !== undefined ? player.skips++ : 0;
 					dm.send("You were skipped.");
-					ctx.sendMessage(`<@${record.currentPlayer}> was skipped`);
+					let skipEmbed = new MessageEmbed()
+						.setDescription(`<@${record.currentPlayer}> has been skipped (${player?.skips}/${record.totalSkips})`)
+						.setColor("ORANGE");
+					
+					ctx.sendMessage(skipEmbed);
 				}
-				if(record.direction === "down" && player?.order === record.players.length + 1) {
-					record.direction = "up";
-					record.round++;
+				if(record.direction === "down") {
+					if(player?.order === record.players.length + 1) {
+						record.direction = "up";
+					}
+					else 
+						record.currentPlayer = record.players.find(x => x.order === player?.order! + 1)?.userId!;
 				}
-				else if(record.direction === "down" && player?.order !== record.players.length + 1) {
-					record.currentPlayer = record.players.find(x => x.order === (player?.order! + 1) - 1)?.userId!;
+				else if(record.direction === "up") {
+					if(player?.order === 1) {
+						record.direction = "down";
+					}
+					else 
+						record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;	
 				}
-				else if(record.direction === "up" && player?.order === 0) {
-					record.direction = "down";
-					record.round++;
-				}
-				else if(record.direction === "up" && player?.order !== 0) {
-					record.currentPlayer = record.players.find(x => x.order === (player?.order! - 1) - 1 )?.userId!; 
-				}
-
-				record.save().catch(error => console.error(error));
 				if(record.round <= record.maxRounds) await this.getUserPick(record, ctx);
 			});
 		});

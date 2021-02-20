@@ -31,6 +31,8 @@ export class SetdraftCommand implements ICommand {
 		const step3 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
 		const step4 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
 		const step5 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
+		const step6 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
+		const step7 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
 		const embed = new MessageEmbed();
 		embed.setTitle("Draft Timer Setup");
 		embed.setDescription("How long is the timer? (m/h) example: For 10 minutes, then put `10m`, 1 hour put `1h`");
@@ -63,17 +65,10 @@ export class SetdraftCommand implements ICommand {
 					}
 					if(collected.content.toLowerCase().includes("save")) step2.stop();
 					else {
-						if(collected.content.includes(",")) {
-							let players = collected.content.trim().split(",");
-							players.forEach(player => {
-								draft.players?.push({userId: player.trim(), skips: 0, pokemon: [], order: draft.players.length + 1});
-								embed.addField(`Player ${ctx.guild?.member(player.trim() as string)?.user.username}`, `Draft Order: ${draft.players?.find(x => x.userId === collected.content.trim())?.order}`);
-							});
-						}
-						else if(ctx.guild?.member(collected.content.trim())?.user.id !== undefined) {
-							draft.players?.push({userId: collected.content.trim(), skips: 0, pokemon: [], order: draft.players.length + 1});
-							embed.addField(`Player ${ctx.guild?.member(collected.content.trim())?.user.username}`, `Draft Order: ${draft.players?.find(x => x.userId === collected.content.trim())?.order}`);
-						}
+						collected.mentions.users.forEach(user => {
+							draft.players?.push({userId: user.id, skips: 0, pokemon: [], order: draft.players.length + 1});
+							embed.addField(`Player ${user.username}`, `Draft Order: ${draft.players?.find(x => x.userId === user.id)?.order}`);	
+						})
 						msg.edit(embed);
 					}
 

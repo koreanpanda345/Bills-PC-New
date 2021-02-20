@@ -12,6 +12,7 @@ export interface IDraftTimer extends Document {
 	round: number;
 	direction: string;
 	pokemon: string[];
+	prefix: string;
 }
 
 const draftTimerSchema = new Schema({
@@ -24,7 +25,8 @@ const draftTimerSchema = new Schema({
 	totalSkips: Number,
 	currentPlayer: String,
 	direction: String,
-	pokemon: [String]
+	pokemon: [String],
+	prefix: String
 });
 
 
