@@ -178,7 +178,7 @@ export class SetdraftCommand implements ICommand {
 			});
 
 			step7.on("end", async () => {
-				DraftTimer.findOne({serverId: draft.serverId!}, (err: CallbackError, record: IDraftTimer) => {
+				DraftTimer.findOne({channelId: draft.channelId!}, (err: CallbackError, record: IDraftTimer) => {
 					if(!record) {
 						draft.currentPlayer = draft.players?.find(x => x.order === 1)?.userId;
 						const newRecord = new DraftTimer({
