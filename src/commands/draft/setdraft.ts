@@ -36,7 +36,6 @@ export class SetdraftCommand implements ICommand {
 		const step4 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
 		const step5 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
 		const step6 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
-		const step7 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
 		const embed = new MessageEmbed();
 		embed.setTitle("Draft Timer Setup");
 		embed.setDescription("What is the league's name?");
@@ -89,7 +88,7 @@ export class SetdraftCommand implements ICommand {
 			
 
 			step3.on("end", (result, reason) => {
-				embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}` + "\nPlease add the pings of the players. You can add each one individually, or all at once.");
+				embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}` + "\nPlease add the pings of the players. You can add each one individually, or all at once.\n Once you have all of your players, type in `save` to continue");
 				msg.edit(embed);
 				step4.on("collect", async (collected: Message) => {
 					if(result.has(collected.id)) return;
@@ -161,23 +160,7 @@ export class SetdraftCommand implements ICommand {
 				});
 			});
 
-			step6.on("end", (result, reason) => {
-				embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}\nTotal Skips Per Player: ${draft.totalSkips}\nTotal Rounds: ${draft.maxRounds}` + "\nDoes this look correct?");
-				msg.edit(embed);
-				step7.on("collect", (collected: Message) => {
-					if(result.has(collected.id)) return;
-					if(reason === "Cancelled") step7.stop("Cancelled");
-					if(collected.content.toLowerCase().includes("cancel")) {
-						return ctx.sendMessage("Cancelling");
-						
-					}
-					else if(collected.content.toLowerCase().includes("yes")) {
-						step7.stop();
-					}
-				});
-			});
-
-			step7.on("end", async () => {
+			step6.on("end", async () => {
 				DraftTimer.findOne({channelId: draft.channelId!}, (err: CallbackError, record: IDraftTimer) => {
 					if(!record) {
 						draft.currentPlayer = draft.players?.find(x => x.order === 1)?.userId;
@@ -192,7 +175,9 @@ export class SetdraftCommand implements ICommand {
 							direction: "down",
 							round: 1,
 							prefix: draft.leaguePrefix!,
-							leagueName: draft.leagueName!
+							leagueName: draft.leagueName!,
+							pause: false,
+							stop: false
 						});
 
 						newRecord.save().catch(error => console.error(error));

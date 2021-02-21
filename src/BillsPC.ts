@@ -12,6 +12,7 @@ export class BillsPC extends Client
 	private readonly _timers: Collection<string, number>;
 	private readonly _runningMonitors: Collection<string, IMonitors>;
 	private readonly _executingMonitors: Collection<string, IMonitors>;
+	private readonly _idleMonitors: Collection<string, IMonitors>;
 	constructor() {
         super();
         this._commands = new Collection<string, any>();
@@ -20,22 +21,19 @@ export class BillsPC extends Client
 		this._timers = new Collection<string, number>();
 		this._runningMonitors = new Collection<string, IMonitors>();
 		this._executingMonitors = new Collection<string, IMonitors>();
+		this._idleMonitors = new Collection<string, IMonitors>();
     }
 
 	public start(type: "development" | "production") {
 		this.loadFiles(type);
 		this.login(process.env.TOKEN);
-		setInterval(() => {
+
+		// This is for background process, like drafts, and such.
+		setInterval(async () => {
 			for(let i = 0; i < this._runningMonitors.size; i++) {
-				if(this._executingMonitors.has(this._runningMonitors.keyArray()[i])) {
-					if(this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.name !== this._runningMonitors.get(this._runningMonitors.keyArray()[i])?.name) {
-						this._executingMonitors.set(this._runningMonitors.keyArray()[i], this._runningMonitors.get(this._runningMonitors.keyArray()[i])!);
-						this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.invoke();
-					} 
-				}
-				else {
+				if(!this._executingMonitors.has(this._runningMonitors.keyArray()[i])) {
 					this._executingMonitors.set(this._runningMonitors.keyArray()[i], this._runningMonitors.get(this._runningMonitors.keyArray()[i])!);
-					this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.invoke();
+					await this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.invoke();
 				}
 			}
 		}, 3000);
@@ -81,5 +79,7 @@ export class BillsPC extends Client
     public get events() { return this._events; }
 	public get timers() { return this._timers; }
 	public get runningMonitors() { return this._runningMonitors; }
+	public get executingMonitors() { return this._executingMonitors; }
+	public get idleMonitors() { return this._idleMonitors; }
 
 }

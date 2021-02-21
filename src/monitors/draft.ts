@@ -6,6 +6,7 @@ import {Dex} from "@pkmn/dex";
 import { TextChannel, Message, MessageEmbed, PermissionString } from "discord.js";
 import moment from "moment";
 import { IMonitors } from "../types/monitors";
+import { CallbackError } from "mongoose";
 
 
 export class DraftMonitor implements IMonitors {
@@ -14,18 +15,61 @@ export class DraftMonitor implements IMonitors {
 		this._ctx = ctx;
 	}
 	name = "draft";
+	pause = async () => {
+		let record = await this.getDraftData();	
+		if(record === null) return this._ctx.sendMessage("Please use the `setdraft` command to setup the draft timer.");
+		record.pause = true;
+		record.save().catch(error => console.error(error));
+	}
+
+	resume = async() => {
+		let record = await this.getDraftData();
+		if(record === null) return this._ctx.sendMessage("Please use the `setdraft` command to setup the draft timer.");
+		record.pause = false;
+		record.save().catch(error => console.error(error));
+	}
+
+	stop = async () => {
+		let record = await this.getDraftData();
+		if(record === null) return this._ctx.sendMessage("Please us the `setdraft` command to setup the draft timer.");
+		record.stop = true;
+		record.save().catch(error => console.error());
+	}
+
+	getDraftData = async (): Promise<IDraftTimer> => {
+		let ctx = this._ctx;
+		let result = await new Promise((resolve) => {
+			
+			DraftTimer.findOne({serverId: ctx.guildId, channelId: ctx.channelId}, async (err: CallbackError, record: IDraftTimer) => {
+				if(record === null) return ctx.sendMessage("Please use the `setdraft` command to setup the draft timer.");
+				// console.debug(record);
+				return resolve(record);
+			});
+		});
+		// @ts-ignore
+		return result;
+
+	}
+
 	invoke = async () => {
 		let ctx = this._ctx;
+		ctx.sendMessage(`Draft Timer has been turned on!`);
 		//@ts-ignore
-		DraftTimer.findOne({serverId: ctx.guildId, channelId: ctx.channelId}, async (err, record: IDraftTimer) => {
-			if(record === null) return ctx.sendMessage("Please use the `setdraft` command to setup the draft timer.");
-			ctx.sendMessage(`Draft Timer has been turned on!`);
-			console.log(record.round <= record.maxRounds);
-
-			let getUserPicks = async (record: IDraftTimer) => {
+			let getUserPicks = async () => {
+				let record = await this.getDraftData();
+				if(record.stop === true)
+				{
+					record.stop = false;
+					record.save().catch(error => console.error(error));
+					ctx.client.runningMonitors.delete(ctx.channelId);
+					ctx.client.executingMonitors.delete(ctx.channelId);
+					ctx.sendMessage("Stopping draft. you can pick off where you last left off on using the `startdraft` command.");
+					
+					return;
+				}
 				(await ctx.client.users.fetch(record.currentPlayer)).createDM().then(async dm => {
 					let filter = (m: Message) => m.author.id === record.currentPlayer;
-					let collector = dm.createMessageCollector(filter, {time: record.timer});
+					let collector = dm.createMessageCollector(filter, {time: record.pause ? 8640000 : record.timer});
 					let player = record.players.find(x => x.userId === record.currentPlayer);
 					if(player?.queue.length !== 0) {
 						let pokemon = player?.queue.shift()!;
@@ -56,7 +100,7 @@ export class DraftMonitor implements IMonitors {
 								record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;	
 						}
 						record.save().catch(error => console.error(error));
-						if(record.round <= record.maxRounds) await getUserPicks(record);
+						if(record.round <= record.maxRounds) await getUserPicks();
 					}
 					else {
 					let time = moment(record.timer);
@@ -64,12 +108,12 @@ export class DraftMonitor implements IMonitors {
 						.setTitle(`Its your pick in ${ctx.guild?.name}`)
 						.setDescription(`Your league's prefix is ${record.prefix}. To draft a pokemon type in \`${record.prefix} <pokemon name>\` example: \`${record.prefix} lopunny\`\nYou can apply text to the selection by adding \`-text\` at the end of the pokemon you want, then say whatever you want to say.`)
 						.setColor("RANDOM")
-						.addField("Timer:", `${time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`}`)
+						.addField("Timer:", `${record.pause ? "Timer Is off" : (time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`)}`)
 						.setFooter(`We are on pick ${player?.order} of round ${record.round} / ${record.maxRounds}`);
 					dm.send(pickEmbed);
 					let serverEmbed = new MessageEmbed()
 						.setDescription(`<@${record.currentPlayer}> is on the Clock!\nWe are on pick ${player?.order} of round ${record.round} / ${record.maxRounds}`)
-						.addField("Timer:", `${time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`}`)
+						.addField("Timer:", `${record.pause ? "Timer Is off" : (time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`)}`)
 						.setColor("RANDOM");
 					ctx.sendMessage(serverEmbed);
 					collector.on("collect", async (collected: Message) => {
@@ -127,7 +171,7 @@ export class DraftMonitor implements IMonitors {
 								record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;	
 						}
 						record.save().catch(error => console.error(error));
-						if(record.round <= record.maxRounds) await getUserPicks(record);
+						if(record.round <= record.maxRounds) await getUserPicks();
 						else if(record.round >= record.maxRounds) {
 							let finishedEmbed = new MessageEmbed();
 							finishedEmbed.setTitle('Draft has concluded');
@@ -139,15 +183,15 @@ export class DraftMonitor implements IMonitors {
 
 								finishedEmbed.addField(`Player ${(await ctx.client.users.fetch(_player.userId)).username}`, desc, true);
 							}
-
+							ctx.client.executingMonitors.delete(ctx.channelId);
+							ctx.client.runningMonitors.delete(ctx.channelId);
 							return ctx.sendMessage(finishedEmbed);
 						}
 					});
 					}
 				});
 			};
-			let data = await getUserPicks(record);
-		});
+			let data = await getUserPicks();
 	}
 
 }

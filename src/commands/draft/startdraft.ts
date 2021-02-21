@@ -10,6 +10,7 @@ import { Collection } from "mongoose";
 export class StartdraftCommand implements ICommand {
 	name = "startdraft";
 	category = "draft";
+	description = "Starts the draft."
 	permission: {user?: PermissionString[]} = {
 		user: ["MANAGE_GUILD"]
 	}

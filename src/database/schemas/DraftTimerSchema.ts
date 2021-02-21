@@ -14,6 +14,8 @@ export interface IDraftTimer extends Document {
 	pokemon: string[];
 	prefix: string;
 	leagueName: string;
+	pause: boolean;
+	stop: boolean;
 }
 
 const draftTimerSchema = new Schema({
@@ -28,7 +30,9 @@ const draftTimerSchema = new Schema({
 	direction: String,
 	pokemon: [String],
 	prefix: String,
-	leagueName: String
+	leagueName: String,
+	pause: Boolean,
+	stop: Boolean
 });
 
 
