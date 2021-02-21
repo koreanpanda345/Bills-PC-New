@@ -24,7 +24,7 @@ export class RandomorderCommand implements ICommand {
 				// @ts-ignore
 				player?.order = shuffled.findIndex(x => x === id) + 1;
 			});
-
+			record.currentPlayer = record.players.find(x =>x.order === 1)?.userId!;
 			let embed = new MessageEmbed()
 				.setTitle(`Randomized Order`)
 				.setDescription(`This is now the new draft order.`);
