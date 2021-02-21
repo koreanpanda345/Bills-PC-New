@@ -77,11 +77,14 @@ export class SetdraftCommand implements ICommand {
 				const step4 = (ctx.channel as TextChannel).createMessageCollector(filter, {time: 2400000});
 
 				step4.on("collect", async (___collected: Message) => {
-					if(collected.content.toLowerCase().includes("cancel"))
+					if(___collected.content.toLowerCase().includes("cancel"))
 					{
 						return ctx.sendMessage("Cancelling");
 					}
-					if(collected.content.toLowerCase().includes("save")) step4.stop();
+					if(___collected.content.toLowerCase().includes("save"))
+					{
+						return step4.stop();
+					}
 					else {
 						___collected.mentions.users.forEach(user => {
 							draft.players?.push({userId: user.id, skips: 0, pokemon: [], order: draft.players.length + 1});
@@ -89,84 +92,85 @@ export class SetdraftCommand implements ICommand {
 						})
 						msg.edit(embed);
 					}
+				});
+				step4.on("end", (_, reason) => {
 					embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}` + "\nWhat is the maximum skips that a player can have in a row? each skip will cut the timer in half for them.");
-				msg.edit(embed);
-				const step5 = (ctx.channel as TextChannel).createMessageCollector(filter, {max: 1});
-
-				step5.on("collect", (____collected: Message) => {
-					if(collected.content.toLowerCase().includes("cancel")) {
-						return ctx.sendMessage("Cancelling");
-					}
-
-					else if(collected.content.toLowerCase().includes("skip"))
-					{
-						draft.totalSkips = 0;
-						ctx.sendMessage("Skipping...");
-						step5.stop();
-					}
-
-					let skips = Number.parseInt(____collected.content.trim());
-					if(isNaN(skips)) return ctx.sendMessage("This is not a number.");
-					draft.totalSkips = skips;
-					embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}\nTotal Skips Per Player: ${draft.totalSkips}` + "\nHow man rounds are there?");
 					msg.edit(embed);
-					const step6 = (ctx.channel as TextChannel).createMessageCollector(filter, {max: 1});
-					step6.on("collect", (_____collected: Message) => {
-					
-					
-					if(_____collected.content.toLowerCase().includes("cancel")) {
-						return ctx.sendMessage("Cancelling");
-					}
-
-					if(_____collected.content.toLowerCase().includes("skip"))
-					{
-						draft.maxRounds = 11;
-						ctx.sendMessage("Skipping...");
-						step6.stop();
-					}
-
-					let rounds = Number.parseInt(collected.content.trim());
-					if(isNaN(rounds)) return ctx.sendMessage("This is not a number");
-					draft.maxRounds = rounds;
-					DraftTimer.findOne({channelId: draft.channelId!}, (err: CallbackError, record: IDraftTimer) => {
-						if(!record) {
-							draft.currentPlayer = draft.players?.find(x => x.order === 1)?.userId;
-							const newRecord = new DraftTimer({
-								serverId: draft.serverId!,
-								channelId: draft.channelId!,
-								timer: draft.timer!,
-								players: draft.players!,
-								maxRounds: draft.maxRounds!,
-								totalSkips: draft.totalSkips!,
-								currentPlayer: draft.currentPlayer,
-								direction: "down",
-								round: 1,
-								prefix: draft.leaguePrefix!,
-								leagueName: draft.leagueName!,
-								pause: false,
-								stop: false
-							});
+					const step5 = (ctx.channel as TextChannel).createMessageCollector(filter, {max: 1});
 	
-							newRecord.save().catch(error => console.error(error));
-							let saveEmbed = new MessageEmbed();
-							saveEmbed.setTitle("Saved");
-							saveEmbed.setDescription("You can now use the `startdraft` command in the channel that you set up in.");
-							saveEmbed.setColor("GREEN");
-	
-							return msg.edit(saveEmbed);
+					step5.on("collect", (____collected: Message) => {
+						if(____collected.content.toLowerCase().includes("cancel")) {
+							return ctx.sendMessage("Cancelling");
 						}
-						let saveEmbed = new MessageEmbed();
-						saveEmbed.setTitle("Waring: a draft timer is already set up in this channel.");
-						saveEmbed.setDescription("If you would like to remove this timer, then use the `deletedraft` command to delete it. To start the draft timer, use the command `startdraft` to start it.");
-						saveEmbed.setColor("ORANGE");
 	
-						return msg.edit(saveEmbed);
-					})
-				});
-				
-				});
-
-				});
+						else if(____collected.content.toLowerCase().includes("skip"))
+						{
+							draft.totalSkips = 3;
+							ctx.sendMessage("Skipping...");
+							step5.stop();
+						}
+	
+						let skips = Number.parseInt(____collected.content.trim());
+						if(isNaN(skips)) return ctx.sendMessage("This is not a number.");
+						draft.totalSkips = skips;
+						embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}\nTotal Skips Per Player: ${draft.totalSkips}` + "\nHow man rounds are there?");
+						msg.edit(embed);
+									const step6 = (ctx.channel as TextChannel).createMessageCollector(filter, {max: 1});
+						step6.on("collect", (_____collected: Message) => {
+						
+						
+						if(_____collected.content.toLowerCase().includes("cancel")) {
+							return ctx.sendMessage("Cancelling");
+						}
+	
+						if(_____collected.content.toLowerCase().includes("skip"))
+						{
+							draft.maxRounds = 11;
+							ctx.sendMessage("Skipping...");
+							step6.stop();
+						}
+	
+						let rounds = Number.parseInt(_____collected.content.trim());
+						if(isNaN(rounds)) return ctx.sendMessage("This is not a number");
+						draft.maxRounds = rounds;
+						DraftTimer.findOne({channelId: draft.channelId!}, (err: CallbackError, record: IDraftTimer) => {
+							if(!record) {
+								draft.currentPlayer = draft.players?.find(x => x.order === 1)?.userId;
+								const newRecord = new DraftTimer({
+									serverId: draft.serverId!,
+									channelId: draft.channelId!,
+									timer: draft.timer!,
+									players: draft.players!,
+									maxRounds: draft.maxRounds!,
+									totalSkips: draft.totalSkips!,
+									currentPlayer: draft.currentPlayer,
+									direction: "down",
+									round: 1,
+									prefix: draft.leaguePrefix!,
+									leagueName: draft.leagueName!,
+									pause: false,
+									stop: false
+								});
+		
+								newRecord.save().catch(error => console.error(error));
+								let saveEmbed = new MessageEmbed();
+								saveEmbed.setTitle("Saved");
+								saveEmbed.setDescription("You can now use the `startdraft` command in the channel that you set up in.");
+								saveEmbed.setColor("GREEN");
+		
+								return msg.edit(saveEmbed);
+							}
+							let saveEmbed = new MessageEmbed();
+							saveEmbed.setTitle("Waring: a draft timer is already set up in this channel.");
+							saveEmbed.setDescription("If you would like to remove this timer, then use the `deletedraft` command to delete it. To start the draft timer, use the command `startdraft` to start it.");
+							saveEmbed.setColor("ORANGE");
+		
+							return msg.edit(saveEmbed);
+						})
+					});
+					
+					});
+				})
 				});
 				});
 				}

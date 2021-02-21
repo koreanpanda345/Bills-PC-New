@@ -82,8 +82,9 @@ export class DraftMonitor implements IMonitors {
 				}
 				(await ctx.client.users.fetch(record.currentPlayer)).createDM().then(async dm => {
 					let filter = (m: Message) => m.author.id === record.currentPlayer;
-					let collector = dm.createMessageCollector(filter, {time: record.pause ? 8640000 : record.timer});
 					let player = record.players.find(x => x.userId === record.currentPlayer);
+					let collector = dm.createMessageCollector(filter, {time: record.pause ? 8640000 : player?.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player?.skips!)))});
+
 					if(player?.queue.length !== 0) {
 						let pokemon = player?.queue.shift()!;
 						pokemon = this.getPokemonName(pokemon);
@@ -154,7 +155,7 @@ export class DraftMonitor implements IMonitors {
 						}
 					}
 					else {
-					let time = moment(record.timer);
+					let time = moment(player.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player.skips))));
 					let pickEmbed = new MessageEmbed()
 						.setTitle(`Its your pick in ${ctx.guild?.name}`)
 						.setDescription(`Your league's prefix is ${record.prefix}. To draft a pokemon type in \`${record.prefix} <pokemon name>\` example: \`${record.prefix} lopunny\`\nYou can apply text to the selection by adding \`-text\` at the end of the pokemon you want, then say whatever you want to say.`)
