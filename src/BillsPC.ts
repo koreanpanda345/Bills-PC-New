@@ -3,30 +3,48 @@ import {Inscriber} from "@koreanpanda/inscriber";
 import { ICommand } from "./types/commands";
 import { IEvent } from "./types/events";
 import { readdirSync } from "fs";
+import { IMonitors } from "./types/monitors";
 export class BillsPC extends Client
 {
     private readonly _commands: Collection<string, ICommand>;
     private readonly _logger: Inscriber;
     private readonly _events: Collection<string, IEvent>;
 	private readonly _timers: Collection<string, number>;
-    constructor() {
+	private readonly _runningMonitors: Collection<string, IMonitors>;
+	private readonly _executingMonitors: Collection<string, IMonitors>;
+	constructor() {
         super();
         this._commands = new Collection<string, any>();
         this._logger = new Inscriber();
         this._events = new Collection<string, any>();
 		this._timers = new Collection<string, number>();
+		this._runningMonitors = new Collection<string, IMonitors>();
+		this._executingMonitors = new Collection<string, IMonitors>();
     }
 
 	public start(type: "development" | "production") {
 		this.loadFiles(type);
 		this.login(process.env.TOKEN);
+		setInterval(() => {
+			for(let i = 0; i < this._runningMonitors.size; i++) {
+				if(this._executingMonitors.has(this._runningMonitors.keyArray()[i])) {
+					if(this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.name !== this._runningMonitors.get(this._runningMonitors.keyArray()[i])?.name) {
+						this._executingMonitors.set(this._runningMonitors.keyArray()[i], this._runningMonitors.get(this._runningMonitors.keyArray()[i])!);
+						this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.invoke();
+					} 
+				}
+				else {
+					this._executingMonitors.set(this._runningMonitors.keyArray()[i], this._runningMonitors.get(this._runningMonitors.keyArray()[i])!);
+					this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.invoke();
+				}
+			}
+		}, 3000);
 	}
 
 	public loadFiles(type: "development" | "production") {
 		this.loadCommands(type);
 		this.loadEvents(type);
 	}
-
 	private loadCommands(type: "development" | "production") {
 		const folder = type === "development" ? "./src/commands" : "./build/commands";
 		const dirs = readdirSync(folder);
@@ -42,7 +60,6 @@ export class BillsPC extends Client
 			}
 		});
 	}
-
 	private loadEvents(type: "development" | "production") {
 		const folder = type === "development" ? "./src/events" : "./build/events";
 		const dirs = readdirSync(folder);
@@ -63,5 +80,6 @@ export class BillsPC extends Client
     public get logger() { return this._logger; }
     public get events() { return this._events; }
 	public get timers() { return this._timers; }
+	public get runningMonitors() { return this._runningMonitors; }
 
 }
