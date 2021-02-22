@@ -30,7 +30,6 @@ export class AddplayerCommand implements ICommand {
 				}
 				else ctx.sendMessage(`${user.username} is already in the draft`);
 			});
-
 			record.save().catch(error => console.error(error));
 			if(list.length) return ctx.sendMessage(`Added These Players:\n${list.join("\n")}`);
 		});
