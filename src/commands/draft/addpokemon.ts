@@ -5,6 +5,7 @@ import DraftTimer from "../../database/schemas/DraftTimerSchema";
 import { CallbackError } from "mongoose";
 import { IDraftTimer } from './../../database/schemas/DraftTimerSchema';
 import { Dex } from "@pkmn/dex";
+import { getNamingConvention } from "../../utils/helpers";
 export class AddpokemonCommand implements ICommand {
 	name = "addpokemon";
 	category = "draft";
@@ -24,6 +25,8 @@ export class AddpokemonCommand implements ICommand {
 			text = pokemon.split("-text")[1].trim();
 			pokemon = pokemon.split("-text")[0].trim();
 		}
+
+		pokemon = getNamingConvention(pokemon);
 
 		DraftTimer.findOne({channelId: ctx.channelId}, async (err: CallbackError, record: IDraftTimer) => {
 			if(!record) return ctx.sendMessage("Please setup the draft by using the `setdraft` command.");

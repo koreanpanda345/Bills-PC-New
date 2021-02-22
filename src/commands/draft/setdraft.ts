@@ -149,7 +149,8 @@ export class SetdraftCommand implements ICommand {
 									prefix: draft.leaguePrefix!,
 									leagueName: draft.leagueName!,
 									pause: false,
-									stop: false
+									stop: false,
+									edits: false
 								});
 		
 								newRecord.save().catch(error => console.error(error));

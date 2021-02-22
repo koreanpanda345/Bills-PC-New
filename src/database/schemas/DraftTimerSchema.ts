@@ -16,6 +16,7 @@ export interface IDraftTimer extends Document {
 	leagueName: string;
 	pause: boolean;
 	stop: boolean;
+	edits: boolean;
 }
 
 const draftTimerSchema = new Schema({
@@ -32,7 +33,8 @@ const draftTimerSchema = new Schema({
 	prefix: String,
 	leagueName: String,
 	pause: Boolean,
-	stop: Boolean
+	stop: Boolean,
+	edits: Boolean
 });
 
 

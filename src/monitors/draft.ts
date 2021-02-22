@@ -38,6 +38,20 @@ export class DraftMonitor implements IMonitors {
 		record.save().catch(error => console.error());
 	}
 
+	edit = async (data: {userId: string, old: string, new: string}) => {
+		console.debug(data);
+		let record = await this.getDraftData();
+		if(record === null) return this._ctx.sendMessage("Please us the `setdraft` command to setup the draft timer.");
+		let player = record.players.find(x => x.userId === data.userId);
+		player?.pokemon.some((pokemon, i) => {
+			if(pokemon === data.old && typeof player?.pokemon !== "undefined") {
+				player.pokemon[i] = data.new;
+				console.log("Success");
+			}
+		});
+		record.save().catch(error => console.error());
+	}
+
 	getDraftData = async (): Promise<IDraftTimer> => {
 		let ctx = this._ctx;
 		let result = await new Promise((resolve) => {
@@ -61,15 +75,17 @@ export class DraftMonitor implements IMonitors {
 		ctx.sendMessage(`Draft Timer has been turned on!`);
 		let record = await this.getDraftData();
 
-		setInterval(async () => {
-			console.log("loaded data");
-			record = await this.getDraftData();
-		}, 10000);
-
-
 		//@ts-ignore
 			let getUserPicks = async () => {
 				
+				setInterval(async () => {
+					record = await this.getDraftData();
+				}, 1000);
+				if(record.edits === true){
+					record.edits = false;
+					record.save().catch(error => console.error(error));
+					return await getUserPicks();
+				}
 				if(record.stop === true)
 				{
 					record.stop = false;
@@ -80,11 +96,13 @@ export class DraftMonitor implements IMonitors {
 					
 					return;
 				}
+
 				(await ctx.client.users.fetch(record.currentPlayer)).createDM().then(async dm => {
+					record = await this.getDraftData();
 					let filter = (m: Message) => m.author.id === record.currentPlayer;
 					let player = record.players.find(x => x.userId === record.currentPlayer);
 					let collector = dm.createMessageCollector(filter, {time: record.pause ? 8640000 : player?.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player?.skips!)))});
-
+					
 					if(player?.queue.length !== 0) {
 						let pokemon = player?.queue.shift()!;
 						pokemon = this.getPokemonName(pokemon);
@@ -112,9 +130,10 @@ export class DraftMonitor implements IMonitors {
 								record.round++;
 							}
 							else 
-								record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;	
+								record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;
+							record.save().catch(error => console.error(error));
+							return await getUserPicks();
 						}
-						record.save().catch(error => console.error(error));
 					}
 					else if(player.skips! >= record.totalSkips) {
 						if(record.direction === "down") {
@@ -137,7 +156,8 @@ export class DraftMonitor implements IMonitors {
 								.setDescription(`<@${record.currentPlayer}> is on auto skip.`)
 								.setColor("RED");
 						ctx.sendMessage(skipEmbed);
-						if(record.round <= record.maxRounds) await getUserPicks();
+						record.save().catch(error => console.error(error));
+						if(record.round <= record.maxRounds) return await getUserPicks();
 						else if(record.round >= record.maxRounds) {
 							let finishedEmbed = new MessageEmbed();
 							finishedEmbed.setTitle('Draft has concluded');
@@ -191,8 +211,13 @@ export class DraftMonitor implements IMonitors {
 							let owner = record.players.find(x => x.pokemon.includes(found!));
 							return dm.send(`${check.name} has already been drafted by ${(await ctx.client.users.fetch(owner?.userId!)).username}`);
 						}
+						player = record.players.find(x => x.userId === record.currentPlayer);
 						player?.pokemon.push(check.name);
 						record.pokemon?.push(check.name);
+						console.debug(record);
+						record.save().catch(error => console.error(error));
+						record = await this.getDraftData();
+						console.debug(record);
 						let draftEmbed = new MessageEmbed()
 							.setDescription(`<@${record.currentPlayer}> Has Drafted **${check.name}**${text !== "" ? `\n${text}`: ""}`)
 							.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)
@@ -202,7 +227,8 @@ export class DraftMonitor implements IMonitors {
 					});
 		
 					collector.on("end", async (collected, reason) => {
-							
+						record = await this.getDraftData();
+						console.debug(record);
 						player = record.players.find(x => x.userId === record.currentPlayer);
 						if(reason === 'time'){
 							player?.skips !== undefined ? player.skips++ : 0;
@@ -229,6 +255,7 @@ export class DraftMonitor implements IMonitors {
 							else 
 								record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;	
 						}
+						console.debug(record);
 						record.save().catch(error => console.error(error));
 						if(record.round <= record.maxRounds) await getUserPicks();
 						else if(record.round >= record.maxRounds) {

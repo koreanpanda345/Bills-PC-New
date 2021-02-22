@@ -1,7 +1,7 @@
 import { ICommand } from "../../types/commands";
 import { CommandContext } from "../../types/commandContext";
 import { DraftMonitor } from './../../monitors/draft';
-import { MessageEmbed } from "discord.js";
+import { MessageEmbed, PermissionString } from "discord.js";
 import { Dex } from "@pkmn/dex";
 import DraftTimer, { IDraftTimer } from "../../database/schemas/DraftTimerSchema";
 import { CallbackError } from "mongoose";
@@ -11,7 +11,9 @@ export class EditpokemonCommand implements ICommand {
 	name = "editpokemon";
 	category = "draft";
 	description = "Edits a players draft pick";
-	
+	permission: {user: PermissionString[]} = {
+		user: ["MANAGE_GUILD"]
+	};
 	invoke = async (ctx: CommandContext) => {
 		let player = ctx.message.mentions.users.first();
 		if(!player) return ctx.sendMessage("Please use the command again, but ping the user that you want to wold like to change their.");
@@ -24,38 +26,31 @@ export class EditpokemonCommand implements ICommand {
 		if(!oldPokemon) return "Please try this command again, but add what pokemon you would like to change.";
 		if(!newPokemon) return "Please try this command again, but add what pokemon you would like to replace the old pokemon with.";
 		
+		let draft = ctx.client.runningMonitors.get(ctx.channelId) as DraftMonitor;
+		if(!draft) return ctx.sendMessage("The draft is not running. please run it by using the command `startdraft`");
+		let record = await draft.getDraftData();
+		
+		if(!record) return ctx.sendMessage("Please setup up the draft using the `setdraft` command.");
+		if(!record.players.find(x => x.userId === player?.id)) return ctx.sendMessage("That player is not in the draft");
+		
+		oldPokemon = getNamingConvention(oldPokemon);
+		newPokemon = getNamingConvention(newPokemon);
 
-		DraftTimer.findOne({channelId: ctx.channelId}, async(err: CallbackError, record: IDraftTimer) => {
-			if(!record) return ctx.sendMessage("Please setup up the draft using the `setdraft` command.");
-			if(!record.players.find(x => x.userId === player?.id)) return ctx.sendMessage("That player is not in the draft");
-			
-			oldPokemon = getNamingConvention(oldPokemon);
-			newPokemon = getNamingConvention(newPokemon);
+		const oldCheck = Dex.getSpecies(oldPokemon);
+		const newCheck = Dex.getSpecies(newPokemon);
 
-			const oldCheck = Dex.getSpecies(oldPokemon);
-			const newCheck = Dex.getSpecies(newPokemon);
-
-			if(!oldCheck) return ctx.sendMessage(`${oldPokemon} is not a valid pokemon.`);
-			if(!newCheck) return ctx.sendMessage(`${newPokemon} is not a valid pokemon.`);
-			
-			const found = record.pokemon.includes(newCheck.name);
-			if(found) return ctx.sendMessage(`${newCheck.name} is already drafted by ${(await ctx.client.users.fetch(record.players.find(x => x.pokemon.includes(newCheck.name))?.userId!)).username}`);
-			let _player = record.players.find(x => x.userId === player?.id);
-			let index = _player?.pokemon.findIndex(x => x === oldCheck.name);
-			let _pokemon = _player?.pokemon as string[];
-			_pokemon[index!] = newCheck.name;
-			_pokemon = record.pokemon as string[];
-			index = record.pokemon.findIndex(x => x === oldCheck.name) as number;
-			_pokemon[index!] = newCheck.name;  
-			record.save().catch(error => console.error(error));
-			
-			let embed = new MessageEmbed();
-			embed.setTitle(`Draft Pick has Been Changed.`);
-			embed.setDescription(`Player ${(await ctx.client.users.fetch(player?.id!)).username} has selected ${newCheck.name} instead of ${oldCheck.name}`);
-			embed.setImage(`https://play.pokemonshowdown.com/sprites/ani/${newCheck.name.toLowerCase()}.gif`);
-			ctx.sendMessage(embed);
-		});
-
+		if(!oldCheck) return ctx.sendMessage(`${oldPokemon} is not a valid pokemon.`);
+		if(!newCheck) return ctx.sendMessage(`${newPokemon} is not a valid pokemon.`);
+		
+		const found = record.pokemon.includes(newCheck.name);
+		if(found) return ctx.sendMessage(`${newCheck.name} is already drafted by ${(await ctx.client.users.fetch(record.players.find(x => x.pokemon.includes(newCheck.name))?.userId!)).username}`);
+		await draft.edit({userId: player.id, old: oldCheck.name, new: newCheck.name});
+		let embed = new MessageEmbed();
+		embed.setTitle(`Draft Pick has Been Changed.`);
+		embed.setDescription(`Player ${(await ctx.client.users.fetch(player?.id!)).username} has selected ${newCheck.name} instead of ${oldCheck.name}`);
+		embed.setImage(`https://play.pokemonshowdown.com/sprites/ani/${newCheck.name.toLowerCase()}.gif`);
+		embed.setColor("RANDOM");
+		ctx.sendMessage(embed);
 		// let draft = ctx.client.runningMonitors.get(ctx.channelId) as DraftMonitor;
 		// if(!draft) return ctx.sendMessage("There doesn't seem like there is a draft happening.");
 		// let user = ctx.message.mentions.users.first();
