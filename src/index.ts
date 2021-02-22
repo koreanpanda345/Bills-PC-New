@@ -11,7 +11,7 @@ mongoose.connect(process.env.MONGOOSE_CONNECTION_URL as string, {
 });
 
 const client = new BillsPC();
-keepAlive();
+//keepAlive();
 
 client.start("production");
 // client.start("development");
