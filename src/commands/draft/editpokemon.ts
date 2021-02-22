@@ -11,6 +11,7 @@ export class EditpokemonCommand implements ICommand {
 	name = "editpokemon";
 	category = "draft";
 	description = "Edits a players draft pick";
+	usage = ["m!editpokemon <@who> <pokemon to be changed>, <desired Pokemon>"];
 	permission: {user: PermissionString[]} = {
 		user: ["MANAGE_GUILD"]
 	};
