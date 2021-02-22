@@ -9,7 +9,8 @@ export class ResumetimerCommand implements ICommand {
 	invoke = async (ctx: CommandContext) => {
 		let draft = ctx.client.runningMonitors.get(ctx.channelId) as DraftMonitor;
 		if(!draft) return ctx.sendMessage("There doesn't seem like there is a draft happening.");
-		draft.resume();
+		await draft.resume();
+		//draft.pause = false;
 		return ctx.sendMessage("Timer has been turn back on.");
 	};
 }

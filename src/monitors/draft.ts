@@ -3,12 +3,234 @@ import { CommandContext } from "../types/commandContext";
 import DraftTimer from "../database/schemas/DraftTimerSchema";
 import {IDraftTimer} from "../database/schemas/DraftTimerSchema";
 import {Dex} from "@pkmn/dex";
-import { TextChannel, Message, MessageEmbed, PermissionString } from "discord.js";
+import { TextChannel, Message, MessageEmbed, PermissionString, DMChannel, MessageCollector } from "discord.js";
 import moment from "moment";
 import { IMonitors } from "../types/monitors";
 import { CallbackError } from "mongoose";
 import { getNamingConvention } from './../utils/helpers';
 
+
+// export class DraftMonitor implements IMonitors {
+// 	name = "draft";
+// 	invoke = async () => {
+// 		await this.start();
+// 	}
+// 	constructor(
+// 		private ctx: CommandContext
+// 	){}
+	
+// 	public async getData(): Promise<IDraftTimer> {
+// 		return await new Promise((resolve) => {
+// 			DraftTimer.findOne({channelId: this.ctx.channelId}, (err: CallbackError, record: IDraftTimer) => {
+// 				if(!record) return this.ctx.sendMessage("Please setup a draft, by using the `setdraft` command.");
+// 				return resolve(record);
+// 			})
+// 		})
+// 	}
+// 	public pause = false;
+// 	public stop = false;
+// 	public edit = false;
+// 	public editPick?: {userId?: string, old?: string, new?: string} = {};
+// 	public async start() {
+// 		await this.process();
+// 	}
+// 	//@ts-ignore
+// 	private async process() {
+// 		let record = await this.getData();
+// 		record.stop = this.stop;
+// 		record.edits = this.edit;
+// 		record.pause = this.pause;
+// 		record = await this.draft(record);
+// 		if(record.edits === true) {
+// 			let player = this.getCurrentPlayer(record);
+// 			player?.pokemon.some((pokemon, i) => {
+// 				if(pokemon === this.editPick?.old) {
+// 					//@ts-ignore
+// 					player?.pokemon[i] = this.editPick.new!;
+// 				}
+// 			});
+
+// 			this.edit = false;
+// 			this.editPick = {};
+// 		}
+// 		this.save(record);
+// 		record = await this.next(record);
+// 		this.save(record);
+
+// 	}
+
+// 	private async next(record: IDraftTimer) {
+// 		let player = record.players.find(x => x.userId === record.currentPlayer);
+// 		if(record.direction === "down") {
+// 			if(player?.order === record.players.length) {
+// 				record.direction = "up";
+// 				record.round++;
+// 			}
+// 			else
+// 				record.currentPlayer = record.players.find(x => x.order === player?.order! + 1)?.userId!;
+// 		}
+// 		else if(record.direction === "up") {
+// 			if(player?.order === 0) {
+// 				record.direction = "down";
+// 				record.round++;
+// 			}
+// 			else 
+// 				record.currentPlayer = record.players.find(x => x.order === player?.order! - 1)?.userId!;
+// 		}
+
+// 		return record;
+// 	}
+
+// 	public async draft(record: IDraftTimer) {
+// 		(await this.ctx.client.users.fetch(record.currentPlayer)).createDM().then(async dm => {
+// 			let filter = (m: Message) => m.author.id === record.currentPlayer;
+// 			let player = this.getCurrentPlayer(record);
+// 			let collector = dm.createMessageCollector(filter, {time: record.pause ? 8640000 : player?.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player?.skips!)))});
+			
+// 			if(player?.skips! >= record.totalSkips) {
+// 				await this.autoSkip(record);
+// 				return record;
+// 			}
+
+// 			if(player?.queue.length !== 0) {
+// 				record = await this.queue(record);
+// 				return record;
+// 			}
+
+// 			let time = moment(player.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player.skips))));
+			
+// 			await this.pickEmbed(record, dm, time);
+// 			await this.serverPickEmbed(record, time);
+
+// 			record = await this.getPick(record, collector, dm);
+// 		});
+
+// 		return record;
+// 	}
+
+// 	private async getPick(record: IDraftTimer, collector: MessageCollector, dm: DMChannel): Promise<IDraftTimer> {
+// 		return await new Promise((resolve) => {
+// 			let player = this.getCurrentPlayer(record);
+// 			collector.on("collect", async (collected: Message) => {
+// 				let args = collected.content.trim().split(/ +/g);
+// 				let prefix = args.shift()?.toLowerCase();
+// 				let pokemon = args.join(" ");
+// 				let text = "";
+// 				if(pokemon.includes("-text")) {
+// 					text = pokemon.split("-text")[1].trim();
+// 					pokemon = pokemon.split("-text")[0].trim();
+// 				}
+
+// 				pokemon = getNamingConvention(pokemon);
+// 				if(prefix?.length! < 1 || prefix !== record.prefix) return dm.send("Please enter your league's prefix, then your pokemon. example `" + record.prefix + " lopunny`");
+// 				let check = Dex.getSpecies(pokemon.toLowerCase().trim());
+// 				if(!check.exists) return dm.send("That is not a pokemon");
+// 				let found = record.pokemon.find(x => x.toLowerCase() === pokemon.toLowerCase());
+// 				if(found) {
+// 					let owner = record.players.find(x => x.pokemon.includes(found!));
+// 					return dm.send(`${check.name} has already been drafted by ${(await this.ctx.client.users.fetch(owner?.userId!)).username}`);
+// 				}
+
+// 				player?.pokemon.push(check.name);
+// 				record.pokemon.push(check.name);
+
+// 				console.debug(record);
+// 				let draftEmbed = new MessageEmbed()
+// 					.setDescription(`<@${record.currentPlayer}> Has Drafted **${check.name}**${text !== "" ? `\n${text}`: ""}`)
+// 					.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)
+// 					.setColor("RANDOM");
+// 				this.ctx.sendMessage(draftEmbed);
+// 				collector.stop('picked');
+// 			});
+
+// 			collector.on("end", async (_, reason) => {
+// 				if(reason === "time") {
+// 					player!.skips += 1;
+// 					await this.skipEmbed(record);
+// 					return resolve(record);
+// 				}
+// 				if(record.round <= record.maxRounds) return await this.process();
+// 				if(record.round >= record.maxRounds) {
+// 					let finishedEmbed = new MessageEmbed();
+// 					finishedEmbed.setTitle('Draft has concluded');
+// 					finishedEmbed.setDescription(`Here is the Drafts that each player has made.`);
+// 					finishedEmbed.setColor("RANDOM");
+// 					for(let _player of record.players) {
+// 						let desc = "";
+// 						_player.pokemon.forEach(x => desc += `Round ${_player.pokemon.findIndex(y => y === x) + 1} - ${x}\n`);
+		
+// 						finishedEmbed.addField(`Player ${(await this.ctx.client.users.fetch(_player.userId)).username}`, desc, true);
+// 					}
+// 					this.ctx.client.executingMonitors.delete(this.ctx.channelId);
+// 					this.ctx.client.runningMonitors.delete(this.ctx.channelId);
+// 					this.ctx.sendMessage(finishedEmbed);
+		
+// 				}
+// 			})
+
+// 			return resolve(record);
+// 		});
+
+
+// 	}
+
+// 	private async skipEmbed(record: IDraftTimer) {
+// 		let player = this.getCurrentPlayer(record);
+// 		let skipEmbed = new MessageEmbed()
+// 			.setDescription(`<@${record.currentPlayer}> has been skipped (${player?.skips}/${record.totalSkips})`)
+// 			.setColor("ORANGE");
+							
+// 		this.ctx.sendMessage(skipEmbed);
+// 	}
+
+// 	private async pickEmbed(record:IDraftTimer, dm: DMChannel, time: moment.Moment) {
+// 		let player = this.getCurrentPlayer(record);
+// 		let pickEmbed = new MessageEmbed()
+// 			.setTitle(`Its your pick in ${record.leagueName}`)
+// 			.setDescription(`Your league's prefix is ${record.prefix}. To draft a pokemon type in \`${record.prefix} <pokemon name>\` example: \`${record.prefix} lopunny\`\nYou can apply text to the selection by adding \`-text\` at the end of the pokemon you want, then say whatever you want to say.`)
+// 			.setColor("RANDOM")
+// 			.addField("Timer:", `${record.pause ? "Timer Is off" : (time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`)}`)
+// 			.setFooter(`We are on pick ${player?.order} of round ${record.round} / ${record.maxRounds}`);
+// 		dm.send(pickEmbed);
+// 	}
+
+// 	private async serverPickEmbed(record: IDraftTimer, time: moment.Moment) {
+// 		let player = this.getCurrentPlayer(record);
+// 		let serverEmbed = new MessageEmbed()
+// 			.setDescription(`<@${record.currentPlayer}> is on the Clock!\nWe are on pick ${player?.order} of round ${record.round} / ${record.maxRounds}`)
+// 			.addField("Timer:", `${record.pause ? "Timer Is off" : (time.minutes() > 60 ? `${time.hours()} hours` : `${time.minutes()} minutes`)}`)
+// 			.setColor("RANDOM");
+// 		this.ctx.sendMessage(serverEmbed);
+// 	}
+
+// 	private async autoSkip (record: IDraftTimer) {
+// 		let skipEmbed = new MessageEmbed()
+// 			.setDescription(`<@${record.currentPlayer}> is on auto skip.`)
+// 			.setColor("RED");
+// 		this.ctx.sendMessage(skipEmbed);
+// 	}
+
+// 	private async queue(record: IDraftTimer) {
+// 		let player = this.getCurrentPlayer(record);
+// 		let pokemon = player?.queue.shift()!;
+// 		pokemon = getNamingConvention(pokemon);
+// 		let check = Dex.getSpecies(pokemon.toLowerCase().trim());
+// 		let draftEmbed = new MessageEmbed()
+// 			.setDescription(`<@${record.currentPlayer}> Has Drafted **${check.name}**`)
+// 			.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)
+// 			.setColor("RANDOM");
+
+// 		this.ctx.sendMessage(draftEmbed);
+// 		return record;
+// 	}
+
+// 	getCurrentPlayer = (record:IDraftTimer) => record.players.find(x => x.userId === record.currentPlayer);
+// 	getPlayer = (record: IDraftTimer, userId: string) => record.players.find(x => x.userId === userId);
+
+// 	save = async(record: IDraftTimer) => record.save().catch(error => console.error(error));
+
+
+// }
 
 export class DraftMonitor implements IMonitors {
 	private _ctx: CommandContext;
@@ -218,6 +440,7 @@ export class DraftMonitor implements IMonitors {
 						record.save().catch(error => console.error(error));
 						record = await this.getDraftData();
 						console.debug(record);
+						dm.send(`You draft ${check.name}`);
 						let draftEmbed = new MessageEmbed()
 							.setDescription(`<@${record.currentPlayer}> Has Drafted **${check.name}**${text !== "" ? `\n${text}`: ""}`)
 							.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)

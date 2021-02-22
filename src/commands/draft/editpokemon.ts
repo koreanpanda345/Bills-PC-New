@@ -29,6 +29,7 @@ export class EditpokemonCommand implements ICommand {
 		let draft = ctx.client.runningMonitors.get(ctx.channelId) as DraftMonitor;
 		if(!draft) return ctx.sendMessage("The draft is not running. please run it by using the command `startdraft`");
 		let record = await draft.getDraftData();
+		//let record = await draft.getData();
 		
 		if(!record) return ctx.sendMessage("Please setup up the draft using the `setdraft` command.");
 		if(!record.players.find(x => x.userId === player?.id)) return ctx.sendMessage("That player is not in the draft");
@@ -44,7 +45,9 @@ export class EditpokemonCommand implements ICommand {
 		
 		const found = record.pokemon.includes(newCheck.name);
 		if(found) return ctx.sendMessage(`${newCheck.name} is already drafted by ${(await ctx.client.users.fetch(record.players.find(x => x.pokemon.includes(newCheck.name))?.userId!)).username}`);
-		await draft.edit({userId: player.id, old: oldCheck.name, new: newCheck.name});
+		draft.edit({userId: player.id, old: oldCheck.name, new: newCheck.name});
+		//draft.edit = true;
+		//draft.editPick = {userId: player.id, old: oldCheck.name, new: newCheck.name};
 		let embed = new MessageEmbed();
 		embed.setTitle(`Draft Pick has Been Changed.`);
 		embed.setDescription(`Player ${(await ctx.client.users.fetch(player?.id!)).username} has selected ${newCheck.name} instead of ${oldCheck.name}`);

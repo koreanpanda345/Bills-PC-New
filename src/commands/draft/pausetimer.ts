@@ -12,6 +12,7 @@ export class PausetimerCommand implements ICommand {
 		if(!draft) return ctx.sendMessage("There doesn't seem like there is a draft happening.");
 		ctx.client.idleMonitors.set(ctx.channelId, draft);
 		await draft.pause();
+		//draft.pause = true;
 		ctx.sendMessage("Paused Timer");
 	}
 }
