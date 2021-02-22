@@ -5,6 +5,7 @@ import {} from "@pkmn/data";
 import {Dex} from "@pkmn/dex";
 import fetch from "node-fetch";
 import { TypeColors } from "../../utils/typeColors";
+import { getNamingConvention } from "../../utils/helpers";
 export class DexCommand implements ICommand {
 	name = "dex";
 	aliases = ["pokemon"];
@@ -86,16 +87,9 @@ export class DexCommand implements ICommand {
 				ctx.sendMessage(embed);
 				break;
 			default:
-				let search = option + ctx.args.join(" ").toLowerCase();
-				if (search.toLowerCase().includes("mega ")) {
-					let temp = search.replace("mega ", "");
-					search = temp + "mega";
-				}
-				if (search.toLowerCase().includes("alola" || "alolan")) {
-					let temp = search.replace("alola", "");
-					temp = temp.replace("alolan", "");
-					search = temp + "alola";
-				}
+				let search = option + " " + ctx.args.join(" ").toLowerCase();
+				console.log(search);
+				search = getNamingConvention(search);
 
 				let poke = Dex.getSpecies(search);
 

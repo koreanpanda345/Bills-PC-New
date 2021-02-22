@@ -13,7 +13,7 @@ export class AddpokemonCommand implements ICommand {
 	permission: {user: PermissionString[]} = {
 		user: ["MANAGE_GUILD"]
 	};
-
+	usage = ["m!addpokemon <@who> <pokemon>"]
 	invoke = async (ctx: CommandContext) => {
 		let player = ctx.message.mentions.users.first();
 		if(!player) return ctx.sendMessage(`Please try this command again, but provide what player you want to add the pokemon to.`);
@@ -35,7 +35,7 @@ export class AddpokemonCommand implements ICommand {
 			if(!check) return ("That is not a valid pokemon");
 			const found = record.pokemon.includes(pokemon);
 			if(found) return ctx.sendMessage(`${pokemon} is already drafted by ${(await ctx.client.users.fetch(record.players.find(x => x.pokemon.includes(pokemon))?.userId!)).username}`);
-
+			
 			record.players.find(x => x.userId === player?.id)?.pokemon.push(pokemon);
 			record.pokemon.push(pokemon);
 
