@@ -76,11 +76,12 @@ export class DraftMonitor implements IMonitors {
 					
 					return;
 				}
-
-				(await ctx.client.users.fetch(record.currentPlayer)).createDM().then(async dm => {
+				let who = record.players.find(x => x.userId === record.currentPlayer)?.leavePicks !== "" ? record.players.find(x => x.userId === record.currentPlayer)?.leavePicks : record.currentPlayer;
+				(await ctx.client.users.fetch(who!)).createDM().then(async dm => {
 					record = await this.getDraftData();
-					let filter = (m: Message) => m.author.id === record.currentPlayer;
+					let filter = (m: Message) => m.author.id === who;
 					let player = record.players.find(x => x.userId === record.currentPlayer);
+					
 					let collector = dm.createMessageCollector(filter, {time: record.pause ? 8640000 : player?.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player?.skips!)))});
 					
 					if(player?.queue.length !== 0) {

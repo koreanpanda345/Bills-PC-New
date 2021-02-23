@@ -5,7 +5,7 @@ export interface IDraftTimer extends Document {
 	serverId: string;
 	channelId: string;
 	timer: number;
-	players: Array<{userId: string, skips: number, pokemon: string[], order: number, queue: string[]}>;
+	players: Array<{userId: string, skips: number, pokemon: string[], order: number, queue: string[], leavePicks: string}>;
 	maxRounds: number;
 	totalSkips: number;
 	currentPlayer: string;
@@ -23,7 +23,7 @@ const draftTimerSchema = new Schema({
 	serverId: String,
 	channelId: String,
 	timer: Number,
-	players: [{userId: String, skips: Number, pokemon: [String], order: Number, queue: [String]}],
+	players: [{userId: String, skips: Number, pokemon: [String], order: Number, queue: [String], leavePicks: String}],
 	round: Number,
 	maxRounds: Number,
 	totalSkips: Number,
@@ -34,7 +34,7 @@ const draftTimerSchema = new Schema({
 	leagueName: String,
 	pause: Boolean,
 	stop: Boolean,
-	edits: Boolean
+	edits: Boolean,
 });
 
 

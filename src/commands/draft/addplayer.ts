@@ -24,7 +24,8 @@ export class AddplayerCommand implements ICommand {
 						skips: 0,
 						pokemon: [],
 						queue: [],
-						order: record.players.length + 1
+						order: record.players.length + 1,
+						leavePicks: ""
 					});
 					list.push(user.username);
 				}
