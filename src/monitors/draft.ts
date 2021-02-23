@@ -76,7 +76,7 @@ export class DraftMonitor implements IMonitors {
 					
 					return;
 				}
-				let who = record.players.find(x => x.userId === record.currentPlayer)?.leavePicks !== "" ? record.players.find(x => x.userId === record.currentPlayer)?.leavePicks : record.currentPlayer;
+				let who = (record.players.find(x => x.userId === record.currentPlayer)?.leavePicks !== "" && record.players.find(x => x.userId === record.currentPlayer)?.leavePicks !== undefined) ? record.players.find(x => x.userId === record.currentPlayer)?.leavePicks : record.currentPlayer;
 				(await ctx.client.users.fetch(who!)).createDM().then(async dm => {
 					record = await this.getDraftData();
 					let filter = (m: Message) => m.author.id === who;
