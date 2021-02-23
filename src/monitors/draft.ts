@@ -82,7 +82,7 @@ export class DraftMonitor implements IMonitors {
 					let filter = (m: Message) => m.author.id === who;
 					let player = record.players.find(x => x.userId === record.currentPlayer);
 					
-					let collector = dm.createMessageCollector(filter, {time: record.pause ? 8640000 : player?.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player?.skips!)))});
+					let collector = dm.createMessageCollector(filter, {time: record.pause ? 604800000 : player?.skips === 0 ? record.timer : Math.floor(Math.round(record.timer / (2 * player?.skips!)))});
 					
 					if(player?.queue.length !== 0) {
 						let pokemon = player?.queue.shift()!;
