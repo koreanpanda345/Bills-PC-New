@@ -19,7 +19,7 @@ export class SetdraftCommand implements ICommand {
 			serverId?: string,
 			timer?: number,
 			totalSkips?: number,
-			players?: Array<{userId?: string, skips?: number, pokemon?: string[], order?: number}>,
+			players?: Array<{userId?: string, skips?: number, pokemon?: string[], order?: number, leavePicks?: string}>,
 			maxRounds?: number,
 			currentPlayer?: string,
 			leagueName?: string,
@@ -87,7 +87,7 @@ export class SetdraftCommand implements ICommand {
 					}
 					else {
 						___collected.mentions.users.forEach(user => {
-							draft.players?.push({userId: user.id, skips: 0, pokemon: [], order: draft.players.length + 1});
+							draft.players?.push({userId: user.id, skips: 0, pokemon: [], order: draft.players.length + 1, leavePicks: ""});
 							embed.addField(`Player ${user.username}`, `Draft Order: ${draft.players?.find(x => x.userId === user.id)?.order}`);	
 						})
 						msg.edit(embed);
