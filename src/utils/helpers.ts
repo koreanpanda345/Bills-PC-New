@@ -104,11 +104,11 @@ export function getNamingConvention(name: string) {
 		return name;
 	}
 	// for calyrex-shadow
-	else if(name.includes("shadow")) {
-		let temp = name.replace("shadow ", "");
-		name = temp + "shadown";
-		return name;
-	}
+	// else if(name.includes("shadow")) {
+	// 	let temp = name.replace("shadow ", "");
+	// 	name = temp + "shadown";
+	// 	return name;
+	// }
 
 
 	else return name;
