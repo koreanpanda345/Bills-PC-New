@@ -26,8 +26,6 @@ export class BillsPC extends Client
     }
 
 	public start(type: "development" | "production") {
-		//console.debug(JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT as string));
-
 		this.loadFiles(type);
 		this.login(process.env.TOKEN);
 

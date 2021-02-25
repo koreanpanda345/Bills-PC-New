@@ -27,19 +27,6 @@ export class GoogleSheets {
 		return client;
 	}
 
-	async get () {
-		const client = await this.connect();
-		const opt = {
-			spreadsheetId: '1bDoUvsC2ArgYk-m3n8Kw-QqfzbZZA2jsPV31F3_QKSc',
-			range: "'Raw Draft Data'!A2:M2"
-		};
-
-		const gsapi = google.sheets({version: 'v4', auth: client});
-
-		let data = await gsapi.spreadsheets.values.get(opt);
-		console.log(data);
-	}
-
 	public async add(data: {spreadsheetId: string, data: Array<Array<string>>}) {
 		const client = await this.connect();
 		const gsapi = google.sheets({version: 'v4', auth: client});
