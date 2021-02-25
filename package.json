@@ -4,7 +4,7 @@
   "description": "",
   "main": "build/index.js",
   "scripts": {
-    "start": "npm run build && node .",
+    "start": "npm i --save && npm run build && node .",
     "build": "tsc",
     "test": "ts-node ./src/index.ts"
   },
