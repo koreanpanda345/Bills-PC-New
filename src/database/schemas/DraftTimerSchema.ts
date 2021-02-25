@@ -17,6 +17,7 @@ export interface IDraftTimer extends Document {
 	pause: boolean;
 	stop: boolean;
 	edits: boolean;
+	sheetId: string;
 }
 
 const draftTimerSchema = new Schema({
@@ -35,6 +36,7 @@ const draftTimerSchema = new Schema({
 	pause: Boolean,
 	stop: Boolean,
 	edits: Boolean,
+	sheetId: String
 });
 
 

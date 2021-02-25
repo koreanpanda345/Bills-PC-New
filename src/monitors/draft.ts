@@ -8,6 +8,8 @@ import moment from "moment";
 import { IMonitors } from "../types/monitors";
 import { CallbackError } from "mongoose";
 import { getNamingConvention } from './../utils/helpers';
+import { GoogleSheets } from "../modules/GoogleSheets";
+// import { GoogleSheets, SpreadSheetData } from "../modules/GoogleSheets";
 
 export class DraftMonitor implements IMonitors {
 	private _ctx: CommandContext;
@@ -54,6 +56,7 @@ export class DraftMonitor implements IMonitors {
 	getPokemonName = (name: string) => {
 		return getNamingConvention(name);
 	};
+
 
 	invoke = async () => {
 		let ctx = this._ctx;
@@ -201,9 +204,15 @@ export class DraftMonitor implements IMonitors {
 						console.debug(record);
 						dm.send(`You draft ${check.name}`);
 						let draftEmbed = new MessageEmbed()
-							.setDescription(`<@${record.currentPlayer}> Has Drafted **${check.name}**${text !== "" ? `\n${text}`: ""}`)
-							.setImage(`https://play.pokemonshowdown.com/sprites/ani/${check.name.toLowerCase()}.gif`)
-							.setColor("RANDOM");
+							draftEmbed.setDescription(`<@${record.currentPlayer}> Has Drafted **${check.name}**${text !== "" ? `\n${text}`: ""}`)
+							let img = check.name.startsWith("Tapu") ? check.name.replace(" ", "") : check.name;
+							draftEmbed.setImage(`https://play.pokemonshowdown.com/sprites/ani/${img.toLowerCase()}.gif`)
+							draftEmbed.setColor("RANDOM");
+							console.log(record.sheetId);
+						if(record.sheetId !== undefined && record.sheetId !== "none") {
+							const google = new GoogleSheets();
+							await google.add({spreadsheetId: record.sheetId, data: [[(await (await ctx.client.users.fetch(player?.userId!)).username), check.name]]});
+						}
 						ctx.sendMessage(draftEmbed);
 						collector.stop('picked');
 					});
@@ -251,6 +260,7 @@ export class DraftMonitor implements IMonitors {
 
 								finishedEmbed.addField(`Player ${(await ctx.client.users.fetch(_player.userId)).username}`, desc, true);
 							}
+							// await this.sendToSheet(record);
 							ctx.client.executingMonitors.delete(ctx.channelId);
 							ctx.client.runningMonitors.delete(ctx.channelId);
 							return ctx.sendMessage(finishedEmbed);

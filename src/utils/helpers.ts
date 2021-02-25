@@ -103,6 +103,9 @@ export function getNamingConvention(name: string) {
 		name = temp + "ice";
 		return name;
 	}
+	else if(name.startsWith("tapu")) {
+		return name.replace(" ", "");
+	}
 	// for calyrex-shadow
 	// else if(name.includes("shadow")) {
 	// 	let temp = name.replace("shadow ", "");

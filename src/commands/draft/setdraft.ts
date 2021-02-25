@@ -113,9 +113,9 @@ export class SetdraftCommand implements ICommand {
 						let skips = Number.parseInt(____collected.content.trim());
 						if(isNaN(skips)) return ctx.sendMessage("This is not a number.");
 						draft.totalSkips = skips;
-						embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}\nTotal Skips Per Player: ${draft.totalSkips}` + "\nHow man rounds are there?");
+						embed.setDescription(`League Name: ${draft.leagueName}\nLeague Prefix: ${draft.leaguePrefix}\nTotal Skips Per Player: ${draft.totalSkips}` + "\nHow many rounds are there?");
 						msg.edit(embed);
-									const step6 = (ctx.channel as TextChannel).createMessageCollector(filter, {max: 1});
+						const step6 = (ctx.channel as TextChannel).createMessageCollector(filter, {max: 1});
 						step6.on("collect", (_____collected: Message) => {
 						
 						
@@ -150,7 +150,8 @@ export class SetdraftCommand implements ICommand {
 									leagueName: draft.leagueName!,
 									pause: false,
 									stop: false,
-									edits: false
+									edits: false,
+									sheetId: "none"
 								});
 		
 								newRecord.save().catch(error => console.error(error));

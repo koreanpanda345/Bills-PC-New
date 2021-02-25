@@ -4,6 +4,7 @@ import { ICommand } from "./types/commands";
 import { IEvent } from "./types/events";
 import { readdirSync } from "fs";
 import { IMonitors } from "./types/monitors";
+import { GoogleSheets } from "./modules/GoogleSheets";
 export class BillsPC extends Client
 {
     private readonly _commands: Collection<string, ICommand>;
@@ -25,6 +26,8 @@ export class BillsPC extends Client
     }
 
 	public start(type: "development" | "production") {
+		//console.debug(JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT as string));
+
 		this.loadFiles(type);
 		this.login(process.env.TOKEN);
 
@@ -65,7 +68,7 @@ export class BillsPC extends Client
 			const files = readdirSync(`${folder}/${dir}`).filter(d => d.endsWith(".js") || d.endsWith(".ts"));
 			for(let file of files) {
 				import(`../${folder}/${dir}/${file}`).then(instance => {
-					const name = file.split(".")[0].charAt(0).toUpperCase() + file.split(".")[0].slice(1);
+				const name = file.split(".")[0].charAt(0).toUpperCase() + file.split(".")[0].slice(1);
 					const event: IEvent = new instance[`${name}Event`](this);
 					this._events.set(event.name, event);
 					this.on(event.name, (...args) => event.invoke(...args));
