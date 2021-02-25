@@ -56,7 +56,6 @@ export class BillsPC extends Client
 					const name = file.split(".")[0].charAt(0).toUpperCase() + file.split(".")[0].slice(1);
 					const command: ICommand = new instance[`${name}Command`](this);
 					this._commands.set(command.name, command);
-					console.log(`Command ${command.name} was loaded.`);
 				})
 			}
 		});
