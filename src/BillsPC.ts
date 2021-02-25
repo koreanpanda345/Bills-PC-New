@@ -39,7 +39,7 @@ export class BillsPC extends Client
 					await this._executingMonitors.get(this._runningMonitors.keyArray()[i])?.invoke();
 				}
 			}
-		}, 3000);
+		}, 10000);
 	}
 
 	public loadFiles(type: "development" | "production") {
